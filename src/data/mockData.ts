@@ -11,13 +11,15 @@ export const LANGUAGES: Language[] = [
   { code: "ja", name: "Japanese" },
   { code: "ko", name: "Korean" },
   { code: "it", name: "Italian" },
+  { code: "fi", name: "Finnish" },
+  { code: "sv", name: "Swedish" },
 ];
 
 export const MOCK_USERS: User[] = [
   { id: "admin-1", name: "Sarah Mitchell", email: "sarah@translathub.com", role: "admin", phone: "+1 555-0100" },
-  { id: "trans-1", name: "Carlos Rivera", email: "carlos@translathub.com", role: "translator", languages: ["Spanish", "Portuguese", "French"], phone: "+1 555-0201" },
+  { id: "trans-1", name: "Carlos Rivera", email: "carlos@translathub.com", role: "translator", languages: ["Spanish", "Portuguese", "French", "Swedish"], phone: "+1 555-0201" },
   { id: "trans-2", name: "Yuki Tanaka", email: "yuki@translathub.com", role: "translator", languages: ["Japanese", "Korean", "Mandarin"], phone: "+1 555-0202" },
-  { id: "trans-3", name: "Amir Hassan", email: "amir@translathub.com", role: "translator", languages: ["Arabic", "French", "German"], phone: "+1 555-0203" },
+  { id: "trans-3", name: "Amir Hassan", email: "amir@translathub.com", role: "translator", languages: ["Arabic", "French", "German", "Finnish"], phone: "+1 555-0203" },
   { id: "cust-1", name: "Emily Watson", email: "emily@acmecorp.com", role: "customer", phone: "+1 555-0301" },
   { id: "cust-2", name: "James Chen", email: "james@techstart.io", role: "customer", phone: "+1 555-0302" },
   { id: "cust-3", name: "Maria Lopez", email: "maria@globalfirm.com", role: "customer", phone: "+1 555-0303" },

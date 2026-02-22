@@ -1,5 +1,6 @@
 import { useAuth } from "@/context/AuthContext";
-import { MOCK_BOOKINGS, MOCK_USERS } from "@/data/mockData";
+import { useBookings } from "@/context/BookingsContext";
+import { MOCK_USERS } from "@/data/mockData";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Users, Languages, TrendingUp } from "lucide-react";
@@ -12,12 +13,13 @@ const statusColor: Record<string, string> = {
 
 const DashboardPage = () => {
   const { user } = useAuth();
+  const { bookings } = useBookings();
   if (!user) return null;
 
   const myBookings =
     user.role === "admin"
-      ? MOCK_BOOKINGS
-      : MOCK_BOOKINGS.filter((b) =>
+      ? bookings
+      : bookings.filter((b) =>
           user.role === "translator" ? b.translatorId === user.id : b.customerId === user.id
         );
 

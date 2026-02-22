@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Globe, LayoutDashboard, Calendar, FileText, Users, LogOut, Languages } from "lucide-react";
+import { Globe, LayoutDashboard, Calendar, FileText, Users, LogOut, Languages, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
@@ -18,6 +18,10 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 
   if (user.role === "admin") {
     navItems.push({ to: "/manage-users", label: "Manage Users", icon: Users });
+  }
+
+  if (user.role === "customer") {
+    navItems.splice(2, 0, { to: "/book-session", label: "Book Session", icon: PlusCircle });
   }
 
   const handleLogout = () => {

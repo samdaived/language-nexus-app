@@ -1,5 +1,5 @@
 import { useAuth } from "@/context/AuthContext";
-import { MOCK_BOOKINGS } from "@/data/mockData";
+import { useBookings } from "@/context/BookingsContext";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
@@ -11,12 +11,13 @@ const statusStyle: Record<string, string> = {
 
 const BookingsPage = () => {
   const { user } = useAuth();
+  const { bookings } = useBookings();
   if (!user) return null;
 
   const myBookings =
     user.role === "admin"
-      ? MOCK_BOOKINGS
-      : MOCK_BOOKINGS.filter((b) =>
+      ? bookings
+      : bookings.filter((b) =>
           user.role === "translator" ? b.translatorId === user.id : b.customerId === user.id
         );
 
