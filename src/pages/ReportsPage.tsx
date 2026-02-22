@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { MOCK_BOOKINGS } from "@/data/mockData";
+import { useBookings } from "@/context/BookingsContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,14 +15,16 @@ const ReportsPage = () => {
   const [from, setFrom] = useState(thirtyAgo);
   const [to, setTo] = useState(today);
 
+  const { bookings } = useBookings();
+
   const myBookings = useMemo(() => {
     if (!user) return [];
     return user.role === "admin"
-      ? MOCK_BOOKINGS
-      : MOCK_BOOKINGS.filter((b) =>
+      ? bookings
+      : bookings.filter((b) =>
           user.role === "translator" ? b.translatorId === user.id : b.customerId === user.id
         );
-  }, [user]);
+  }, [user, bookings]);
 
   const filtered = useMemo(
     () => myBookings.filter((b) => b.date >= from && b.date <= to && b.status === "completed"),

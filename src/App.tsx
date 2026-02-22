@@ -4,11 +4,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { BookingsProvider } from "@/context/BookingsContext";
 import AppLayout from "@/components/AppLayout";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
 import CalendarPage from "@/pages/CalendarPage";
 import BookingsPage from "@/pages/BookingsPage";
+import BookNewSessionPage from "@/pages/BookNewSessionPage";
 import ReportsPage from "@/pages/ReportsPage";
 import ManageUsersPage from "@/pages/ManageUsersPage";
 import NotFound from "@/pages/NotFound";
@@ -25,6 +27,7 @@ const ProtectedRoutes = () => {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/bookings" element={<BookingsPage />} />
+        <Route path="/book-session" element={<BookNewSessionPage />} />
         <Route path="/reports" element={<ReportsPage />} />
         {user.role === "admin" && <Route path="/manage-users" element={<ManageUsersPage />} />}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
@@ -50,9 +53,11 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <BookingsProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </BookingsProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

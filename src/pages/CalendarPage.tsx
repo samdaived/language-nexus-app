@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { MOCK_BOOKINGS } from "@/data/mockData";
+import { useBookings } from "@/context/BookingsContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -15,17 +15,18 @@ const statusDot: Record<string, string> = {
 
 const CalendarPage = () => {
   const { user } = useAuth();
+  const { bookings } = useBookings();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const myBookings = useMemo(() => {
     if (!user) return [];
     return user.role === "admin"
-      ? MOCK_BOOKINGS
-      : MOCK_BOOKINGS.filter((b) =>
+      ? bookings
+      : bookings.filter((b) =>
           user.role === "translator" ? b.translatorId === user.id : b.customerId === user.id
         );
-  }, [user]);
+  }, [user, bookings]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
