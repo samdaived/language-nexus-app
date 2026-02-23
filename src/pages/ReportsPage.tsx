@@ -235,6 +235,7 @@ const ReportsPage = () => {
         )}
 
 
+        <Card className="overflow-hidden">
           <h3 className="px-4 py-3 font-semibold text-foreground border-b">Session Details</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
