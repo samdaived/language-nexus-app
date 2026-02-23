@@ -5,8 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Printer } from "lucide-react";
+import { Printer, ChevronDown } from "lucide-react";
 
 const ReportsPage = () => {
   const { user, users } = useAuth();
@@ -120,27 +121,46 @@ const ReportsPage = () => {
 
         {user.role === "admin" && (
           <div className="mt-4 border-t pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <Label className="text-sm font-semibold">Filter by Translator</Label>
-              <Button variant="ghost" size="sm" onClick={selectAllTranslators} className="text-xs h-7">
-                {selectedTranslatorIds.length === allTranslators.length ? "Deselect All" : "Select All"}
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {allTranslators.map((t) => (
-                <label key={t.id} className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox
-                    checked={selectedTranslatorIds.includes(t.id)}
-                    onCheckedChange={() => toggleTranslator(t.id)}
-                  />
-                  <span className="text-sm text-foreground">{t.name}</span>
-                  {t.hourlyRate && <span className="text-xs text-muted-foreground">(€{t.hourlyRate}/hr)</span>}
-                </label>
-              ))}
-            </div>
-            {selectedTranslatorIds.length === 0 && (
-              <p className="text-xs text-muted-foreground mt-2">No filter applied — showing all translators</p>
-            )}
+            <Label className="text-sm font-semibold mb-2 block">Filter by Translator</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-72 justify-between">
+                  <span className="truncate">
+                    {selectedTranslatorIds.length === 0
+                      ? "All translators"
+                      : selectedTranslatorIds.length === allTranslators.length
+                      ? "All translators selected"
+                      : `${selectedTranslatorIds.length} translator${selectedTranslatorIds.length > 1 ? "s" : ""} selected`}
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-0 bg-popover z-50" align="start">
+                <div className="border-b px-3 py-2">
+                  <button
+                    className="text-xs text-primary hover:underline"
+                    onClick={selectAllTranslators}
+                  >
+                    {selectedTranslatorIds.length === allTranslators.length ? "Deselect All" : "Select All"}
+                  </button>
+                </div>
+                <div className="max-h-60 overflow-y-auto p-1">
+                  {allTranslators.map((t) => (
+                    <label
+                      key={t.id}
+                      className="flex items-center gap-2 cursor-pointer rounded-md px-3 py-2 hover:bg-muted transition-colors"
+                    >
+                      <Checkbox
+                        checked={selectedTranslatorIds.includes(t.id)}
+                        onCheckedChange={() => toggleTranslator(t.id)}
+                      />
+                      <span className="text-sm text-foreground">{t.name}</span>
+                      {t.hourlyRate && <span className="text-xs text-muted-foreground ml-auto">€{t.hourlyRate}/hr</span>}
+                    </label>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         )}
       </Card>
