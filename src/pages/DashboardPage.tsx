@@ -11,7 +11,7 @@ const statusColor: Record<string, string> = {
 };
 
 const DashboardPage = () => {
-  const { user } = useAuth();
+  const { user, users } = useAuth();
   const { bookings } = useBookings();
   if (!user) return null;
 
