@@ -37,7 +37,7 @@ const BookNewSessionPage = () => {
     );
   }, [selectedLanguage]);
 
-  const selectedTranslator = MOCK_USERS.find((u) => u.id === selectedTranslatorId);
+  const selectedTranslator = users.find((u) => u.id === selectedTranslatorId);
 
   if (!user || user.role !== "customer") return null;
 

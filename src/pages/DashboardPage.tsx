@@ -32,8 +32,8 @@ const DashboardPage = () => {
     { label: "Completed", value: completed.length, icon: TrendingUp, color: "text-success" },
     ...(user.role === "admin"
       ? [
-          { label: "Translators", value: MOCK_USERS.filter((u) => u.role === "translator").length, icon: Languages, color: "text-accent-foreground" },
-          { label: "Customers", value: MOCK_USERS.filter((u) => u.role === "customer").length, icon: Users, color: "text-warning" },
+          { label: "Translators", value: users.filter((u) => u.role === "translator").length, icon: Languages, color: "text-accent-foreground" },
+          { label: "Customers", value: users.filter((u) => u.role === "customer").length, icon: Users, color: "text-warning" },
         ]
       : [{ label: "Total Hours", value: Math.round(totalMinutes / 60), icon: Clock, color: "text-warning" }]),
   ];
