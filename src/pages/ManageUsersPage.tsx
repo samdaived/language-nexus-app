@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,18 +14,17 @@ import { toast } from "@/hooks/use-toast";
 
 const ManageUsersPage = () => {
   const { user, users, updateUser } = useAuth();
+  const { t } = useLanguage();
   const [filterRole, setFilterRole] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  // Add user form
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState<UserRole>("customer");
   const [newHourlyRate, setNewHourlyRate] = useState("");
 
-  // Edit user form
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editHourlyRate, setEditHourlyRate] = useState("");
@@ -48,7 +48,7 @@ const ManageUsersPage = () => {
     setNewEmail("");
     setNewHourlyRate("");
     setDialogOpen(false);
-    toast({ title: "User added", description: `${newName} has been added as ${newRole}` });
+    toast({ title: t("userAdded"), description: `${newName} ${t("hasBeenAddedAs")} ${t(newRole as any)}` });
   };
 
   const openEdit = (u: User) => {
@@ -69,66 +69,72 @@ const ManageUsersPage = () => {
     };
     updateUser(updated);
     setEditDialogOpen(false);
-    toast({ title: "User updated", description: `${editName} has been updated` });
+    toast({ title: t("userUpdated"), description: `${editName} ${t("hasBeenUpdated")}` });
   };
+
+  const roleFilters = [
+    { key: "all", label: t("all") },
+    { key: "admin", label: t("admins") },
+    { key: "translator", label: t("translatorPlural") },
+    { key: "customer", label: t("customerPlural") },
+  ];
 
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="page-header">Manage Users</h1>
-          <p className="page-subtitle">{users.length} total users</p>
+          <h1 className="page-header">{t("manageUsers")}</h1>
+          <p className="page-subtitle">{users.length} {t("totalUsers")}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2"><UserPlus className="h-4 w-4" />Add User</Button>
+            <Button className="gap-2"><UserPlus className="h-4 w-4" />{t("addUser")}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New User</DialogTitle>
+              <DialogTitle>{t("addNewUser")}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-2">
               <div>
-                <Label>Name</Label>
-                <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Full name" />
+                <Label>{t("name")}</Label>
+                <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t("fullName")} />
               </div>
               <div>
-                <Label>Email</Label>
+                <Label>{t("email")}</Label>
                 <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="email@example.com" />
               </div>
               <div>
-                <Label>Role</Label>
+                <Label>{t("role")}</Label>
                 <Select value={newRole} onValueChange={(v) => setNewRole(v as UserRole)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="customer">Customer</SelectItem>
-                    <SelectItem value="translator">Translator</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="customer">{t("customer")}</SelectItem>
+                    <SelectItem value="translator">{t("translator")}</SelectItem>
+                    <SelectItem value="admin">{t("admin")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {newRole === "translator" && (
                 <div>
-                  <Label>Hourly Rate (€)</Label>
+                  <Label>{t("hourlyRate")} (€)</Label>
                   <Input type="number" value={newHourlyRate} onChange={(e) => setNewHourlyRate(e.target.value)} placeholder="e.g. 50" />
                 </div>
               )}
-              <Button onClick={handleAdd} className="w-full">Add User</Button>
+              <Button onClick={handleAdd} className="w-full">{t("addUser")}</Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
       <div className="flex gap-2 no-print">
-        {["all", "admin", "translator", "customer"].map((r) => (
+        {roleFilters.map((r) => (
           <Button
-            key={r}
-            variant={filterRole === r ? "default" : "outline"}
+            key={r.key}
+            variant={filterRole === r.key ? "default" : "outline"}
             size="sm"
-            onClick={() => setFilterRole(r)}
-            className="capitalize"
+            onClick={() => setFilterRole(r.key)}
           >
-            {r === "all" ? "All" : `${r}s`}
+            {r.label}
           </Button>
         ))}
       </div>
@@ -148,7 +154,7 @@ const ManageUsersPage = () => {
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Badge variant="secondary" className="capitalize">{u.role}</Badge>
+                <Badge variant="secondary" className="capitalize">{t(u.role as any)}</Badge>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(u)}>
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
@@ -165,28 +171,27 @@ const ManageUsersPage = () => {
         ))}
       </div>
 
-      {/* Edit User Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
+            <DialogTitle>{t("editUser")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div>
-              <Label>Name</Label>
+              <Label>{t("name")}</Label>
               <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
             </div>
             <div>
-              <Label>Email</Label>
+              <Label>{t("email")}</Label>
               <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
             </div>
             {editingUser?.role === "translator" && (
               <div>
-                <Label>Hourly Rate (€)</Label>
+                <Label>{t("hourlyRate")} (€)</Label>
                 <Input type="number" value={editHourlyRate} onChange={(e) => setEditHourlyRate(e.target.value)} placeholder="e.g. 50" />
               </div>
             )}
-            <Button onClick={handleEdit} className="w-full">Save Changes</Button>
+            <Button onClick={handleEdit} className="w-full">{t("saveChanges")}</Button>
           </div>
         </DialogContent>
       </Dialog>

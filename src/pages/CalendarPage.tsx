@@ -1,11 +1,10 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useBookings } from "@/context/BookingsContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const statusDot: Record<string, string> = {
   upcoming: "bg-info",
@@ -16,8 +15,11 @@ const statusDot: Record<string, string> = {
 const CalendarPage = () => {
   const { user } = useAuth();
   const { bookings } = useBookings();
+  const { t } = useLanguage();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  const DAYS = [t("sun"), t("mon"), t("tue"), t("wed"), t("thu"), t("fri"), t("sat")];
 
   const myBookings = useMemo(() => {
     if (!user) return [];
@@ -53,8 +55,8 @@ const CalendarPage = () => {
   return (
     <div className="animate-fade-in space-y-6">
       <div>
-        <h1 className="page-header">Calendar</h1>
-        <p className="page-subtitle">View your upcoming and past sessions</p>
+        <h1 className="page-header">{t("calendar")}</h1>
+        <p className="page-subtitle">{t("calendarSubtitle")}</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -97,7 +99,7 @@ const CalendarPage = () => {
                         </div>
                       ))}
                       {dayBookings.length > 2 && (
-                        <span className="text-[10px] text-muted-foreground">+{dayBookings.length - 2} more</span>
+                        <span className="text-[10px] text-muted-foreground">+{dayBookings.length - 2} {t("more")}</span>
                       )}
                     </div>
                   </div>
@@ -111,17 +113,17 @@ const CalendarPage = () => {
           <h3 className="mb-3 font-semibold text-foreground">
             {selectedDate
               ? new Date(selectedDate + "T12:00:00").toLocaleDateString("default", { weekday: "long", month: "long", day: "numeric" })
-              : "Select a date"}
+              : t("selectDate")}
           </h3>
           {selectedDate && selectedBookings.length === 0 && (
-            <p className="text-sm text-muted-foreground">No sessions on this date</p>
+            <p className="text-sm text-muted-foreground">{t("noSessionsDate")}</p>
           )}
           <div className="space-y-3">
             {selectedBookings.map((b) => (
               <div key={b.id} className="rounded-lg border p-3">
                 <div className="flex items-center justify-between mb-1">
                   <Badge className={`${statusDot[b.status]} text-primary-foreground text-[10px]`}>{b.status}</Badge>
-                  <span className="text-xs text-muted-foreground">{b.duration} min</span>
+                  <span className="text-xs text-muted-foreground">{b.duration} {t("min")}</span>
                 </div>
                 <p className="font-medium text-foreground text-sm">
                   {user.role === "customer" ? b.translatorName : b.customerName}

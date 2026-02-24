@@ -1,5 +1,6 @@
 import { useAuth } from "@/context/AuthContext";
 import { useBookings } from "@/context/BookingsContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Users, Languages, TrendingUp } from "lucide-react";
@@ -13,6 +14,7 @@ const statusColor: Record<string, string> = {
 const DashboardPage = () => {
   const { user, users } = useAuth();
   const { bookings } = useBookings();
+  const { t } = useLanguage();
   if (!user) return null;
 
   const myBookings =
@@ -27,22 +29,22 @@ const DashboardPage = () => {
   const totalMinutes = completed.reduce((sum, b) => sum + b.duration, 0);
 
   const stats = [
-    { label: "Total Bookings", value: myBookings.length, icon: Calendar, color: "text-primary" },
-    { label: "Upcoming", value: upcoming.length, icon: Clock, color: "text-info" },
-    { label: "Completed", value: completed.length, icon: TrendingUp, color: "text-success" },
+    { label: t("totalBookings"), value: myBookings.length, icon: Calendar, color: "text-primary" },
+    { label: t("upcoming"), value: upcoming.length, icon: Clock, color: "text-info" },
+    { label: t("completed"), value: completed.length, icon: TrendingUp, color: "text-success" },
     ...(user.role === "admin"
       ? [
-          { label: "Translators", value: users.filter((u) => u.role === "translator").length, icon: Languages, color: "text-accent-foreground" },
-          { label: "Customers", value: users.filter((u) => u.role === "customer").length, icon: Users, color: "text-warning" },
+          { label: t("translators"), value: users.filter((u) => u.role === "translator").length, icon: Languages, color: "text-accent-foreground" },
+          { label: t("customers"), value: users.filter((u) => u.role === "customer").length, icon: Users, color: "text-warning" },
         ]
-      : [{ label: "Total Hours", value: Math.round(totalMinutes / 60), icon: Clock, color: "text-warning" }]),
+      : [{ label: t("totalHours"), value: Math.round(totalMinutes / 60), icon: Clock, color: "text-warning" }]),
   ];
 
   return (
     <div className="animate-fade-in space-y-6">
       <div>
-        <h1 className="page-header">Welcome back, {user.name.split(" ")[0]}</h1>
-        <p className="page-subtitle capitalize">{user.role} Dashboard</p>
+        <h1 className="page-header">{t("welcomeBack")}, {user.name.split(" ")[0]}</h1>
+        <p className="page-subtitle capitalize">{t(user.role as any)} {t("dashboard")}</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -61,9 +63,9 @@ const DashboardPage = () => {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-foreground">Upcoming Sessions</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">{t("upcomingSessions")}</h2>
           {upcoming.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No upcoming sessions</p>
+            <p className="text-sm text-muted-foreground">{t("noUpcoming")}</p>
           ) : (
             <div className="space-y-3">
               {upcoming.slice(0, 5).map((b) => (
@@ -82,9 +84,9 @@ const DashboardPage = () => {
         </Card>
 
         <Card className="p-6">
-          <h2 className="mb-4 text-lg font-semibold text-foreground">Recent Sessions</h2>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">{t("recentSessions")}</h2>
           {completed.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No completed sessions</p>
+            <p className="text-sm text-muted-foreground">{t("noCompleted")}</p>
           ) : (
             <div className="space-y-3">
               {completed.slice(0, 5).map((b) => (
@@ -92,7 +94,7 @@ const DashboardPage = () => {
                   <div>
                     <p className="font-medium text-foreground">{user.role === "customer" ? b.translatorName : b.customerName}</p>
                     <p className="text-sm text-muted-foreground">
-                      {b.date} · {b.duration} min
+                      {b.date} · {b.duration} {t("min")}
                     </p>
                   </div>
                   <Badge variant="secondary">{b.language}</Badge>

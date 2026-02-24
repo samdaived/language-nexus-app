@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useBookings } from "@/context/BookingsContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { Printer, ChevronDown } from "lucide-react";
 
 const ReportsPage = () => {
   const { user, users } = useAuth();
+  const { t } = useLanguage();
   const today = new Date().toISOString().split("T")[0];
   const thirtyAgo = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
 
@@ -81,7 +83,6 @@ const ReportsPage = () => {
     return Object.entries(map).sort((a, b) => b[1].minutes - a[1].minutes);
   }, [filtered, rateOverrides, users]);
 
-  // Get unique translators in filtered results
   const translatorRates = useMemo(() => {
     const map = new Map<string, { name: string; rate: number }>();
     filtered.forEach((b) => {
@@ -98,39 +99,39 @@ const ReportsPage = () => {
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="page-header">Session Report</h1>
-          <p className="page-subtitle">Generate and print reports for completed sessions</p>
+          <h1 className="page-header">{t("sessionReport")}</h1>
+          <p className="page-subtitle">{t("reportSubtitle")}</p>
         </div>
         <Button onClick={() => window.print()} className="no-print gap-2">
           <Printer className="h-4 w-4" />
-          Print Report
+          {t("printReport")}
         </Button>
       </div>
 
       <Card className="no-print p-4">
         <div className="flex flex-wrap items-end gap-4">
           <div>
-            <Label>From</Label>
+            <Label>{t("from")}</Label>
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-44" />
           </div>
           <div>
-            <Label>To</Label>
+            <Label>{t("to")}</Label>
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-44" />
           </div>
         </div>
 
         {user.role === "admin" && (
           <div className="mt-4 border-t pt-4">
-            <Label className="text-sm font-semibold mb-2 block">Filter by Translator</Label>
+            <Label className="text-sm font-semibold mb-2 block">{t("filterByTranslator")}</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-72 justify-between">
                   <span className="truncate">
                     {selectedTranslatorIds.length === 0
-                      ? "All translators"
+                      ? t("allTranslators")
                       : selectedTranslatorIds.length === allTranslators.length
-                      ? "All translators selected"
-                      : `${selectedTranslatorIds.length} translator${selectedTranslatorIds.length > 1 ? "s" : ""} selected`}
+                      ? t("allTranslatorsSelected")
+                      : `${selectedTranslatorIds.length} ${t("translatorsSelected")}`}
                   </span>
                   <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -141,21 +142,21 @@ const ReportsPage = () => {
                     className="text-xs text-primary hover:underline"
                     onClick={selectAllTranslators}
                   >
-                    {selectedTranslatorIds.length === allTranslators.length ? "Deselect All" : "Select All"}
+                    {selectedTranslatorIds.length === allTranslators.length ? t("deselectAll") : t("selectAll")}
                   </button>
                 </div>
                 <div className="max-h-60 overflow-y-auto p-1">
-                  {allTranslators.map((t) => (
+                  {allTranslators.map((tr) => (
                     <label
-                      key={t.id}
+                      key={tr.id}
                       className="flex items-center gap-2 cursor-pointer rounded-md px-3 py-2 hover:bg-muted transition-colors"
                     >
                       <Checkbox
-                        checked={selectedTranslatorIds.includes(t.id)}
-                        onCheckedChange={() => toggleTranslator(t.id)}
+                        checked={selectedTranslatorIds.includes(tr.id)}
+                        onCheckedChange={() => toggleTranslator(tr.id)}
                       />
-                      <span className="text-sm text-foreground">{t.name}</span>
-                      {t.hourlyRate && <span className="text-xs text-muted-foreground ml-auto">€{t.hourlyRate}/hr</span>}
+                      <span className="text-sm text-foreground">{tr.name}</span>
+                      {tr.hourlyRate && <span className="text-xs text-muted-foreground ml-auto">€{tr.hourlyRate}/hr</span>}
                     </label>
                   ))}
                 </div>
@@ -165,10 +166,9 @@ const ReportsPage = () => {
         )}
       </Card>
 
-      {/* Adjustable hourly rates */}
       {translatorRates.length > 0 && (
         <Card className="no-print p-4">
-          <h3 className="mb-3 font-semibold text-foreground text-sm">Translator Hourly Rates (adjustable)</h3>
+          <h3 className="mb-3 font-semibold text-foreground text-sm">{t("translatorHourlyRates")}</h3>
           <div className="flex flex-wrap gap-4">
             {translatorRates.map(([id, { name, rate }]) => (
               <div key={id} className="flex items-center gap-2">
@@ -194,26 +194,26 @@ const ReportsPage = () => {
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-4">
           <Card className="stat-card">
-            <p className="text-sm text-muted-foreground">Total Sessions</p>
+            <p className="text-sm text-muted-foreground">{t("totalSessions")}</p>
             <p className="mt-1 text-3xl font-bold text-foreground">{filtered.length}</p>
           </Card>
           <Card className="stat-card">
-            <p className="text-sm text-muted-foreground">Total Duration</p>
+            <p className="text-sm text-muted-foreground">{t("totalDuration")}</p>
             <p className="mt-1 text-3xl font-bold text-foreground">{hours}h {mins}m</p>
           </Card>
           <Card className="stat-card">
-            <p className="text-sm text-muted-foreground">Languages Used</p>
+            <p className="text-sm text-muted-foreground">{t("languagesUsed")}</p>
             <p className="mt-1 text-3xl font-bold text-foreground">{langBreakdown.length}</p>
           </Card>
           <Card className="stat-card">
-            <p className="text-sm text-muted-foreground">Total Cost</p>
+            <p className="text-sm text-muted-foreground">{t("totalCost")}</p>
             <p className="mt-1 text-3xl font-bold text-foreground">€{totalCost.toFixed(2)}</p>
           </Card>
         </div>
 
         {langBreakdown.length > 0 && (
           <Card className="p-6">
-            <h3 className="mb-4 font-semibold text-foreground">Breakdown by Language</h3>
+            <h3 className="mb-4 font-semibold text-foreground">{t("breakdownByLanguage")}</h3>
             <div className="space-y-3">
               {langBreakdown.map(([lang, data]) => (
                 <div key={lang} className="flex items-center justify-between">
@@ -222,7 +222,7 @@ const ReportsPage = () => {
                     <span className="font-medium text-foreground">{lang}</span>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {data.count} sessions · {Math.floor(data.minutes / 60)}h {data.minutes % 60}m · €{data.cost.toFixed(2)}
+                    {data.count} {t("sessions")} · {Math.floor(data.minutes / 60)}h {data.minutes % 60}m · €{data.cost.toFixed(2)}
                   </span>
                 </div>
               ))}
@@ -232,7 +232,7 @@ const ReportsPage = () => {
 
         {user.role === "admin" && translatorRates.length > 0 && (
           <Card className="p-6">
-            <h3 className="mb-4 font-semibold text-foreground">Breakdown by Translator</h3>
+            <h3 className="mb-4 font-semibold text-foreground">{t("breakdownByTranslator")}</h3>
             <div className="space-y-3">
               {translatorRates.map(([id, { name }]) => {
                 const tBookings = filtered.filter((b) => b.translatorId === id);
@@ -245,7 +245,7 @@ const ReportsPage = () => {
                       <span className="font-medium text-foreground">{name}</span>
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {tBookings.length} sessions · {Math.floor(tMinutes / 60)}h {tMinutes % 60}m · €{tCost.toFixed(2)}
+                      {tBookings.length} {t("sessions")} · {Math.floor(tMinutes / 60)}h {tMinutes % 60}m · €{tCost.toFixed(2)}
                     </span>
                   </div>
                 );
@@ -254,26 +254,25 @@ const ReportsPage = () => {
           </Card>
         )}
 
-
         <Card className="overflow-hidden">
-          <h3 className="px-4 py-3 font-semibold text-foreground border-b">Session Details</h3>
+          <h3 className="px-4 py-3 font-semibold text-foreground border-b">{t("sessionDetails")}</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted">
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Date</th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Time</th>
-                  {user.role !== "customer" && <th className="px-4 py-2 text-left font-medium text-muted-foreground">Customer</th>}
-                  {user.role !== "translator" && <th className="px-4 py-2 text-left font-medium text-muted-foreground">Translator</th>}
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Language</th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Duration</th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Rate</th>
-                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Cost</th>
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t("date")}</th>
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t("time")}</th>
+                  {user.role !== "customer" && <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t("customer")}</th>}
+                  {user.role !== "translator" && <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t("translator")}</th>}
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t("language")}</th>
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t("duration")}</th>
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t("rate")}</th>
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">{t("cost")}</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No completed sessions in this period</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">{t("noCompletedSessions")}</td></tr>
                 ) : (
                   filtered.map((b) => {
                     const rate = getRate(b.translatorId);
@@ -285,7 +284,7 @@ const ReportsPage = () => {
                         {user.role !== "customer" && <td className="px-4 py-2 text-foreground">{b.customerName}</td>}
                         {user.role !== "translator" && <td className="px-4 py-2 text-foreground">{b.translatorName}</td>}
                         <td className="px-4 py-2 text-foreground">{b.language}</td>
-                        <td className="px-4 py-2 text-muted-foreground">{b.duration} min</td>
+                        <td className="px-4 py-2 text-muted-foreground">{b.duration} {t("min")}</td>
                         <td className="px-4 py-2 text-muted-foreground">€{rate}/hr</td>
                         <td className="px-4 py-2 font-medium text-foreground">€{cost.toFixed(2)}</td>
                       </tr>

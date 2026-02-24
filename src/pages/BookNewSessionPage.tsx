@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useBookings } from "@/context/BookingsContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { LANGUAGES } from "@/data/mockData";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,6 +22,7 @@ const BookNewSessionPage = () => {
   const { user, users } = useAuth();
   const { addBooking } = useBookings();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [step, setStep] = useState(1);
   const [selectedLanguage, setSelectedLanguage] = useState("");
@@ -35,7 +37,7 @@ const BookNewSessionPage = () => {
     return users.filter(
       (u) => u.role === "translator" && u.languages?.includes(selectedLanguage)
     );
-  }, [selectedLanguage]);
+  }, [selectedLanguage, users]);
 
   const selectedTranslator = users.find((u) => u.id === selectedTranslatorId);
 
@@ -67,27 +69,28 @@ const BookNewSessionPage = () => {
     };
 
     addBooking(newBooking);
-    toast({ title: "Session booked!", description: `${selectedLanguage} session on ${format(selectedDate, "PPP")} with ${selectedTranslator?.name}` });
+    toast({ title: t("sessionBooked"), description: `${selectedLanguage} ${t("sessionOn")} ${format(selectedDate, "PPP")} ${t("with")} ${selectedTranslator?.name}` });
     navigate("/bookings");
   };
 
   const canProceedStep2 = !!selectedLanguage && !!selectedDate;
   const canProceedStep3 = canProceedStep2 && !!selectedTranslatorId;
 
+  const steps = [
+    { n: 1, label: t("languageAndDate") },
+    { n: 2, label: t("selectTranslator") },
+    { n: 3, label: t("confirm") },
+  ];
+
   return (
     <div className="animate-fade-in space-y-6 max-w-2xl">
       <div>
-        <h1 className="page-header">Book a Session</h1>
-        <p className="page-subtitle">Find a translator by language and date</p>
+        <h1 className="page-header">{t("bookSessionDesc")}</h1>
+        <p className="page-subtitle">{t("bookSessionSubtitle")}</p>
       </div>
 
-      {/* Step indicators */}
       <div className="flex items-center gap-2">
-        {[
-          { n: 1, label: "Language & Date" },
-          { n: 2, label: "Select Translator" },
-          { n: 3, label: "Confirm" },
-        ].map((s) => (
+        {steps.map((s) => (
           <div key={s.n} className="flex items-center gap-2">
             <div
               className={cn(
@@ -105,16 +108,15 @@ const BookNewSessionPage = () => {
         ))}
       </div>
 
-      {/* Step 1: Language & Date */}
       {step === 1 && (
         <Card className="p-6 space-y-5">
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <Languages className="h-4 w-4 text-primary" /> Language
+              <Languages className="h-4 w-4 text-primary" /> {t("language")}
             </Label>
             <Select value={selectedLanguage} onValueChange={(v) => { setSelectedLanguage(v); setSelectedTranslatorId(""); }}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a language" />
+                <SelectValue placeholder={t("selectLanguage")} />
               </SelectTrigger>
               <SelectContent>
                 {LANGUAGES.map((l) => (
@@ -124,14 +126,14 @@ const BookNewSessionPage = () => {
             </Select>
             {selectedLanguage && (
               <p className="text-xs text-muted-foreground">
-                {availableTranslators.length} translator{availableTranslators.length !== 1 ? "s" : ""} available for {selectedLanguage}
+                {availableTranslators.length} {t("translatorsAvailable")} {selectedLanguage}
               </p>
             )}
           </div>
 
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 text-primary" /> Date
+              <CalendarIcon className="h-4 w-4 text-primary" /> {t("date")}
             </Label>
             <Popover>
               <PopoverTrigger asChild>
@@ -140,7 +142,7 @@ const BookNewSessionPage = () => {
                   className={cn("w-full justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+                  {selectedDate ? format(selectedDate, "PPP") : t("pickDate")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -157,12 +159,11 @@ const BookNewSessionPage = () => {
           </div>
 
           <Button onClick={() => setStep(2)} disabled={!canProceedStep2} className="w-full">
-            Next — Select Translator
+            {t("nextSelectTranslator")}
           </Button>
         </Card>
       )}
 
-      {/* Step 2: Select Translator */}
       {step === 2 && (
         <Card className="p-6 space-y-5">
           <div className="flex items-center justify-between">
@@ -171,30 +172,30 @@ const BookNewSessionPage = () => {
                 {selectedLanguage} · {selectedDate && format(selectedDate, "PPP")}
               </p>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setStep(1)}>Change</Button>
+            <Button variant="ghost" size="sm" onClick={() => setStep(1)}>{t("change")}</Button>
           </div>
 
           <div className="space-y-3">
             <Label className="flex items-center gap-2">
-              <User className="h-4 w-4 text-primary" /> Available Translators
+              <User className="h-4 w-4 text-primary" /> {t("availableTranslators")}
             </Label>
             {availableTranslators.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No translators available for {selectedLanguage}.</p>
+              <p className="text-sm text-muted-foreground">{t("noTranslatorsAvailable")} {selectedLanguage}.</p>
             ) : (
-              availableTranslators.map((t) => (
+              availableTranslators.map((tr) => (
                 <div
-                  key={t.id}
-                  onClick={() => setSelectedTranslatorId(t.id)}
+                  key={tr.id}
+                  onClick={() => setSelectedTranslatorId(tr.id)}
                   className={cn(
                     "cursor-pointer rounded-lg border p-4 transition-colors",
-                    selectedTranslatorId === t.id
+                    selectedTranslatorId === tr.id
                       ? "border-primary bg-accent"
                       : "border-border hover:bg-muted"
                   )}
                 >
-                  <p className="font-medium text-foreground">{t.name}</p>
+                  <p className="font-medium text-foreground">{tr.name}</p>
                   <div className="mt-1 flex flex-wrap gap-1">
-                    {t.languages?.map((lang) => (
+                    {tr.languages?.map((lang) => (
                       <Badge key={lang} variant={lang === selectedLanguage ? "default" : "secondary"} className="text-[10px]">
                         {lang}
                       </Badge>
@@ -206,59 +207,58 @@ const BookNewSessionPage = () => {
           </div>
 
           <Button onClick={() => setStep(3)} disabled={!canProceedStep3} className="w-full">
-            Next — Session Details
+            {t("nextSessionDetails")}
           </Button>
         </Card>
       )}
 
-      {/* Step 3: Confirm */}
       {step === 3 && (
         <Card className="p-6 space-y-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-foreground">{selectedLanguage} with {selectedTranslator?.name}</p>
+              <p className="text-sm font-medium text-foreground">{selectedLanguage} {t("with")} {selectedTranslator?.name}</p>
               <p className="text-sm text-muted-foreground">{selectedDate && format(selectedDate, "PPP")}</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setStep(2)}>Change</Button>
+            <Button variant="ghost" size="sm" onClick={() => setStep(2)}>{t("change")}</Button>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" /> Start Time
+                <Clock className="h-4 w-4 text-primary" /> {t("startTime")}
               </Label>
               <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Duration</Label>
+              <Label>{t("duration")}</Label>
               <Select value={duration} onValueChange={setDuration}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="30">30 minutes</SelectItem>
-                  <SelectItem value="60">60 minutes</SelectItem>
-                  <SelectItem value="90">90 minutes</SelectItem>
-                  <SelectItem value="120">120 minutes</SelectItem>
+                  <SelectItem value="30">30 {t("min")}</SelectItem>
+                  <SelectItem value="60">60 {t("min")}</SelectItem>
+                  <SelectItem value="90">90 {t("min")}</SelectItem>
+                  <SelectItem value="120">120 {t("min")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Notes (optional)</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Legal document, medical consultation..." />
+            <Label>{t("notesOptional")}</Label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("notesPlaceholder")} />
           </div>
 
           <div className="rounded-lg bg-muted p-4 text-sm space-y-1">
-            <p><span className="text-muted-foreground">Language:</span> <span className="font-medium text-foreground">{selectedLanguage}</span></p>
-            <p><span className="text-muted-foreground">Translator:</span> <span className="font-medium text-foreground">{selectedTranslator?.name}</span></p>
-            <p><span className="text-muted-foreground">Date:</span> <span className="font-medium text-foreground">{selectedDate && format(selectedDate, "PPP")}</span></p>
-            <p><span className="text-muted-foreground">Time:</span> <span className="font-medium text-foreground">{startTime} – {calcEndTime(startTime, Number(duration))} ({duration} min)</span></p>
+            <p><span className="text-muted-foreground">{t("language")}:</span> <span className="font-medium text-foreground">{selectedLanguage}</span></p>
+            <p><span className="text-muted-foreground">{t("translator")}:</span> <span className="font-medium text-foreground">{selectedTranslator?.name}</span></p>
+            <p><span className="text-muted-foreground">{t("date")}:</span> <span className="font-medium text-foreground">{selectedDate && format(selectedDate, "PPP")}</span></p>
+            <p><span className="text-muted-foreground">{t("time")}:</span> <span className="font-medium text-foreground">{startTime} – {calcEndTime(startTime, Number(duration))} ({duration} {t("min")})</span></p>
           </div>
 
           <Button onClick={handleSubmit} className="w-full">
-            Confirm Booking
+            {t("confirmBooking")}
           </Button>
         </Card>
       )}
