@@ -27,6 +27,7 @@ import { supabase } from "@/lib/customSupabase";
 import { ARCHIVED_ORDER_STATUSES, ORDER_STATUSES } from "@/lib/translations";
 import { ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { AdminUsers } from "@/components/AdminUsers";
 
 type Product = {
   id: string;
@@ -436,6 +437,9 @@ const Admin = () => {
               <TabsTrigger value="favorites">
                 {ta.favorites} ({favorites.length})
               </TabsTrigger>
+              <TabsTrigger value="users">
+                {ta.users ?? "Users"}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="products" className="space-y-6">
@@ -624,6 +628,10 @@ const Admin = () => {
                   </Table>
                 )}
               </Card>
+            </TabsContent>
+
+            <TabsContent value="users">
+              <AdminUsers />
             </TabsContent>
           </Tabs>
         </div>

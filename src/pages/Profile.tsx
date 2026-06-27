@@ -19,11 +19,11 @@ const Profile = () => {
   const { t, direction } = useLanguage();
   const tp = (t as any).profile;
 
-  // Personal (profiles table)
+  // Read-only personal info (managed by admin)
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
 
-  // Company (companies table, linked via profiles.company)
+  // Company (editable except RC once set)
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState("");
   const [ice, setIce] = useState("");
@@ -36,9 +36,8 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // RC is always disabled if a value already exists; otherwise editable so the
-  // user can submit it on initial onboarding, after which it is locked forever.
-  const iceLocked = ice.trim().length > 0;
+  // RC is locked once a value already exists
+  const rcLocked = rc.trim().length > 0;
 
   useEffect(() => {
     if (!user) return;
@@ -80,8 +79,6 @@ const Profile = () => {
   const save = async () => {
     if (!user) return;
     if (
-      !fullName.trim() ||
-      !phone.trim() ||
       !companyName.trim() ||
       !ice.trim() ||
       !rc.trim() ||
@@ -94,21 +91,21 @@ const Profile = () => {
     }
     setSaving(true);
 
-    // 1) Upsert company
     let cid = companyId;
-    const companyPayload: any = {
+    const updatePayload: any = {
       name: companyName.trim(),
-      rc: rc.trim(),
+      ice: ice.trim(),
       city: city.trim(),
       phone: companyPhone.trim(),
       office_address: officeAddress.trim(),
       storage_office: storageOffice.trim(),
     };
+
     if (cid) {
-      // never update rc on existing companies
+      // never update RC on existing companies
       const { error: cErr } = await supabase
         .from("companies")
-        .update(companyPayload)
+        .update(updatePayload)
         .eq("id", cid);
       if (cErr) {
         setSaving(false);
@@ -121,7 +118,7 @@ const Profile = () => {
     } else {
       const { data: created, error: cErr } = await supabase
         .from("companies")
-        .insert({ ...companyPayload, ice: ice.trim() })
+        .insert({ ...updatePayload, rc: rc.trim() })
         .select("id")
         .single();
       if (cErr || !created) {
@@ -134,24 +131,23 @@ const Profile = () => {
       }
       cid = (created as any).id;
       setCompanyId(cid);
+
+      // link the new company to the profile
+      const { error: pErr } = await supabase
+        .from("profiles")
+        .update({ company: cid })
+        .eq("id", user.id);
+      if (pErr) {
+        setSaving(false);
+        return toast({
+          title: tp.error,
+          description: pErr.message,
+          variant: "destructive",
+        });
+      }
     }
 
-    // 2) Upsert profile (email is set by auth, never edited here)
-    const { error: pErr } = await supabase.from("profiles").upsert({
-      id: user.id,
-      email: user.email ?? null,
-      full_name: fullName.trim(),
-      phone: phone.trim(),
-      company: cid,
-    } as any);
-
     setSaving(false);
-    if (pErr)
-      return toast({
-        title: tp.error,
-        description: pErr.message,
-        variant: "destructive",
-      });
     toast({ title: tp.saved });
     if (redirect) navigate(redirect);
   };
@@ -166,33 +162,30 @@ const Profile = () => {
             <p className="text-sm text-muted-foreground">{tp.subtitle}</p>
           </div>
 
-          {/* Personal information */}
+          {/* Personal information — read-only, managed by admin */}
           <Card className="p-6 space-y-4">
             <h2 className="text-lg font-semibold">{tp.personalSection}</h2>
+            <p className="text-xs text-muted-foreground">
+              {tp.personalManagedByAdmin ??
+                "Personal information is managed by the administrator."}
+            </p>
             <div className="space-y-2">
               <Label>{tp.email}</Label>
               <Input value={user?.email ?? ""} disabled />
-              <p className="text-xs text-muted-foreground">{tp.emailLocked}</p>
             </div>
-            <div className="space-y-2">
-              <Label>{tp.fullName} *</Label>
-              <Input
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{tp.phone} *</Label>
-              <Input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                disabled={loading}
-              />
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{tp.fullName}</Label>
+                <Input value={fullName} disabled />
+              </div>
+              <div className="space-y-2">
+                <Label>{tp.phone}</Label>
+                <Input value={phone} disabled />
+              </div>
             </div>
           </Card>
 
-          {/* Company information */}
+          {/* Company information — editable by the user */}
           <Card className="p-6 space-y-4">
             <h2 className="text-lg font-semibold">{tp.companySection}</h2>
             <div className="space-y-2">
@@ -209,21 +202,19 @@ const Profile = () => {
                 <Input
                   value={ice}
                   onChange={(e) => setIce(e.target.value)}
-                  disabled={loading || iceLocked}
+                  disabled={loading}
                 />
-                {iceLocked && (
-                  <p className="text-xs text-muted-foreground">
-                    {tp.iceLocked}
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label>{tp.rc} *</Label>
                 <Input
                   value={rc}
                   onChange={(e) => setRc(e.target.value)}
-                  disabled={loading}
+                  disabled={loading || rcLocked}
                 />
+                {rcLocked && (
+                  <p className="text-xs text-muted-foreground">{tp.rcLocked}</p>
+                )}
               </div>
             </div>
             <div className="grid md:grid-cols-2 gap-4">

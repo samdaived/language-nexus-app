@@ -156,6 +156,7 @@ export const translations = {
       saved: 'Profil enregistré',
       required: 'Tous les champs sont requis',
       error: 'Erreur',
+      personalManagedByAdmin: 'Les informations personnelles sont gérées par l\'administrateur.',
     },
     admin: {
       title: 'Admin',
@@ -202,6 +203,9 @@ export const translations = {
       buyers: 'Acheteurs',
       error: 'Erreur',
       statusUpdated: 'Statut mis à jour',
+      users: 'Utilisateurs',
+      selectUser: 'Sélectionner un utilisateur',
+      assignCompany: 'Société assignée',
     },
     forecast: {
       title: 'Prévision Volume Annuel',
@@ -377,6 +381,7 @@ export const translations = {
       saved: 'تم حفظ الملف',
       required: 'جميع الحقول مطلوبة',
       error: 'خطأ',
+      personalManagedByAdmin: 'تتم إدارة المعلومات الشخصية من قبل المسؤول.',
     },
     admin: {
       title: 'لوحة التحكم',
@@ -423,6 +428,9 @@ export const translations = {
       buyers: 'المشترون',
       error: 'خطأ',
       statusUpdated: 'تم تحديث الحالة',
+      users: 'المستخدمون',
+      selectUser: 'اختر مستخدمًا',
+      assignCompany: 'الشركة المعينة',
     },
     forecast: {
       title: 'توقعات الحجم السنوي',
@@ -598,6 +606,7 @@ export const translations = {
       saved: 'Profile saved',
       required: 'All fields are required',
       error: 'Error',
+      personalManagedByAdmin: 'Personal information is managed by the administrator.',
     },
     admin: {
       title: 'Admin',
@@ -644,6 +653,9 @@ export const translations = {
       buyers: 'Buyers',
       error: 'Error',
       statusUpdated: 'Status updated',
+      users: 'Users',
+      selectUser: 'Select a user',
+      assignCompany: 'Assigned company',
     },
     forecast: {
       title: 'Annual Volume Forecast',
