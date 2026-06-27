@@ -41,18 +41,28 @@ const Prices = () => {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [cart, setCart] = useState<Record<string, CartLine>>({});
   const [showCart, setShowCart] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [ice, setIce] = useState("");
+  const [rc, setRc] = useState("");
+  const [city, setCity] = useState("");
+  const [companyPhone, setCompanyPhone] = useState("");
+  const [officeAddress, setOfficeAddress] = useState("");
+  const [storageOffice, setStorageOffice] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const profileComplete = !!(
+    fullName.trim() &&
+    phone.trim() &&
     companyName.trim() &&
     ice.trim() &&
-    phone.trim() &&
-    address.trim()
+    rc.trim() &&
+    city.trim() &&
+    companyPhone.trim() &&
+    officeAddress.trim() &&
+    storageOffice.trim()
   );
 
   useEffect(() => {
@@ -78,14 +88,29 @@ const Prices = () => {
           setFavorites(new Set((favs ?? []).map((f: any) => f.product_id)));
           const { data: profile } = await supabase
             .from("profiles")
-            .select("phone, shipping_address, company_name, ice")
+            .select("full_name, phone, company")
             .eq("id", user.id)
             .maybeSingle();
           if (profile) {
+            setFullName((profile as any).full_name ?? "");
             setPhone((profile as any).phone ?? "");
-            setAddress((profile as any).shipping_address ?? "");
-            setCompanyName((profile as any).company_name ?? "");
-            setIce((profile as any).ice ?? "");
+            const cid = (profile as any).company as string | null;
+            if (cid) {
+              const { data: company } = await supabase
+                .from("companies")
+                .select("name, ice, rc, city, phone, office_address, storage_office")
+                .eq("id", cid)
+                .maybeSingle();
+              if (company) {
+                setCompanyName((company as any).name ?? "");
+                setIce((company as any).ice ?? "");
+                setRc((company as any).rc ?? "");
+                setCity((company as any).city ?? "");
+                setCompanyPhone((company as any).phone ?? "");
+                setOfficeAddress((company as any).office_address ?? "");
+                setStorageOffice((company as any).storage_office ?? "");
+              }
+            }
           }
         } catch {
           /* tables not created yet — ignore */
