@@ -5,6 +5,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { Menu, X, LogIn, LogOut, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { ThemeToggle } from './ThemeToggle';
 
 export const Header = () => {
   const { t, direction } = useLanguage();
@@ -75,6 +76,7 @@ export const Header = () => {
             <div className="hidden sm:block">
               <LanguageSwitcher />
             </div>
+            <ThemeToggle className="hidden sm:inline-flex" />
 
             {buyer ? (
               <div className="hidden md:flex items-center gap-3">
@@ -168,8 +170,9 @@ export const Header = () => {
               </Link>
             )}
 
-            <div className="px-4 pt-2">
+            <div className="px-4 pt-2 flex items-center gap-2">
               <LanguageSwitcher />
+              <ThemeToggle />
             </div>
           </nav>
         </div>
