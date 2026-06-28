@@ -7,18 +7,16 @@ export type BuyerAccount = {
   username: string;
   password: string;
   companyName: string;
-  role: 'buyer' | 'manager';
+  role: "buyer" | "manager";
   createdAt: string;
 };
 
-const ACCOUNTS_KEY = 'pn_buyer_accounts';
-const SESSION_KEY = 'pn_buyer_session';
-
-export const ADMIN_PASSWORD = 'peak-admin-2026'; // TODO: change this
+const ACCOUNTS_KEY = "pn_buyer_accounts";
+const SESSION_KEY = "pn_buyer_session";
 
 export const getAccounts = (): BuyerAccount[] => {
   try {
-    return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]');
+    return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || "[]");
   } catch {
     return [];
   }
@@ -28,10 +26,14 @@ export const saveAccounts = (accounts: BuyerAccount[]) => {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
 };
 
-export const addAccount = (data: Omit<BuyerAccount, 'id' | 'createdAt'>) => {
+export const addAccount = (data: Omit<BuyerAccount, "id" | "createdAt">) => {
   const accounts = getAccounts();
-  if (accounts.some((a) => a.username.toLowerCase() === data.username.toLowerCase())) {
-    throw new Error('Username already exists');
+  if (
+    accounts.some(
+      (a) => a.username.toLowerCase() === data.username.toLowerCase(),
+    )
+  ) {
+    throw new Error("Username already exists");
   }
   const account: BuyerAccount = {
     ...data,
@@ -47,37 +49,17 @@ export const removeAccount = (id: string) => {
   saveAccounts(getAccounts().filter((a) => a.id !== id));
 };
 
-// Hardcoded built-in users (always available)
-const USERS: { username: string; password: string }[] = [
-  { username: 'admin', password: 'admin123' },
-  { username: 'john', password: 'john123' },
-  { username: 'sam', password: 'secret123' },
-];
-
-export const login = (username: string, password: string): BuyerAccount | null => {
+export const login = (
+  username: string,
+  password: string,
+): BuyerAccount | null => {
   const uname = username.trim();
-
-  // 1. Check hardcoded users first
-  const hardcoded = USERS.find(
-    (u) => u.username.toLowerCase() === uname.toLowerCase() && u.password === password
-  );
-  if (hardcoded) {
-    const account: BuyerAccount = {
-      id: `hc-${hardcoded.username}`,
-      username: hardcoded.username,
-      password: hardcoded.password,
-      companyName: hardcoded.username === 'admin' ? 'Peak Nutrition Admin' : hardcoded.username,
-      role: hardcoded.username === 'admin' ? 'manager' : 'buyer',
-      createdAt: new Date().toISOString(),
-    };
-    localStorage.setItem(SESSION_KEY, account.id);
-    localStorage.setItem(`pn_buyer_hc_${account.id}`, JSON.stringify(account));
-    return account;
-  }
 
   // 2. Fall back to dynamically-added accounts
   const account = getAccounts().find(
-    (a) => a.username.toLowerCase() === uname.toLowerCase() && a.password === password
+    (a) =>
+      a.username.toLowerCase() === uname.toLowerCase() &&
+      a.password === password,
   );
   if (account) {
     localStorage.setItem(SESSION_KEY, account.id);
@@ -91,7 +73,7 @@ export const logout = () => localStorage.removeItem(SESSION_KEY);
 export const getCurrentBuyer = (): BuyerAccount | null => {
   const id = localStorage.getItem(SESSION_KEY);
   if (!id) return null;
-  if (id.startsWith('hc-')) {
+  if (id.startsWith("hc-")) {
     try {
       const raw = localStorage.getItem(`pn_buyer_hc_${id}`);
       if (raw) return JSON.parse(raw);
