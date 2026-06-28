@@ -8,36 +8,59 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/customSupabase";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { ConfirmDiscardDialog } from "@/components/ConfirmDiscardDialog";
+
+type CompanyState = {
+  name: string;
+  ice: string;
+  rc: string;
+  city: string;
+  phone: string;
+  office_address: string;
+  storage_office: string;
+};
+
+const emptyCompany: CompanyState = {
+  name: "",
+  ice: "",
+  rc: "",
+  city: "",
+  phone: "",
+  office_address: "",
+  storage_office: "",
+};
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const redirect = params.get("redirect");
   const { t, direction } = useLanguage();
-  const tp = (t as any).profile;
+  const tp: any = (t as any).profile;
 
-  // Read-only personal info (managed by admin)
+  // Personal (read-only, managed by admin)
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
 
-  // Company (editable except RC once set)
+  // Company
   const [companyId, setCompanyId] = useState<string | null>(null);
-  const [companyName, setCompanyName] = useState("");
-  const [ice, setIce] = useState("");
-  const [rc, setRc] = useState("");
-  const [city, setCity] = useState("");
-  const [companyPhone, setCompanyPhone] = useState("");
-  const [officeAddress, setOfficeAddress] = useState("");
-  const [storageOffice, setStorageOffice] = useState("");
+  const [original, setOriginal] = useState<CompanyState>(emptyCompany);
+  const [company, setCompany] = useState<CompanyState>(emptyCompany);
 
+  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  // RC is locked once a value already exists
-  const rcLocked = rc.trim().length > 0;
+  // ICE is locked once set (admins can still edit it elsewhere)
+  const iceLocked = !isAdmin && original.ice.trim().length > 0;
+
+  const dirty = useMemo(
+    () => JSON.stringify(company) !== JSON.stringify(original),
+    [company, original],
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -54,21 +77,25 @@ const Profile = () => {
         const cid = (profile as any).company as string | null;
         if (cid) {
           setCompanyId(cid);
-          const { data: company } = await supabase
+          const { data: c } = await supabase
             .from("companies")
             .select(
               "id, name, ice, rc, city, phone, office_address, storage_office",
             )
             .eq("id", cid)
             .maybeSingle();
-          if (company) {
-            setCompanyName((company as any).name ?? "");
-            setIce((company as any).ice ?? "");
-            setRc((company as any).rc ?? "");
-            setCity((company as any).city ?? "");
-            setCompanyPhone((company as any).phone ?? "");
-            setOfficeAddress((company as any).office_address ?? "");
-            setStorageOffice((company as any).storage_office ?? "");
+          if (c) {
+            const next: CompanyState = {
+              name: (c as any).name ?? "",
+              ice: (c as any).ice ?? "",
+              rc: (c as any).rc ?? "",
+              city: (c as any).city ?? "",
+              phone: (c as any).phone ?? "",
+              office_address: (c as any).office_address ?? "",
+              storage_office: (c as any).storage_office ?? "",
+            };
+            setOriginal(next);
+            setCompany(next);
           }
         }
       }
@@ -76,81 +103,90 @@ const Profile = () => {
     })();
   }, [user]);
 
+  const requiredOk = (c: CompanyState) =>
+    c.name.trim() &&
+    c.ice.trim() &&
+    c.rc.trim() &&
+    c.city.trim() &&
+    c.phone.trim() &&
+    c.office_address.trim() &&
+    c.storage_office.trim();
+
+  const handleCancel = () => {
+    if (dirty) setConfirmOpen(true);
+    else setEditing(false);
+  };
+
+  const discard = () => {
+    setCompany(original);
+    setEditing(false);
+    setConfirmOpen(false);
+  };
+
   const save = async () => {
     if (!user) return;
-    if (
-      !companyName.trim() ||
-      !ice.trim() ||
-      !rc.trim() ||
-      !city.trim() ||
-      !companyPhone.trim() ||
-      !officeAddress.trim() ||
-      !storageOffice.trim()
-    ) {
+    if (!requiredOk(company))
       return toast({ title: tp.required, variant: "destructive" });
-    }
     setSaving(true);
 
-    let cid = companyId;
-    const updatePayload: any = {
-      name: companyName.trim(),
-      ice: ice.trim(),
-      city: city.trim(),
-      phone: companyPhone.trim(),
-      office_address: officeAddress.trim(),
-      storage_office: storageOffice.trim(),
+    const payload: any = {
+      name: company.name.trim(),
+      city: company.city.trim(),
+      phone: company.phone.trim(),
+      office_address: company.office_address.trim(),
+      storage_office: company.storage_office.trim(),
+      rc: company.rc.trim(),
     };
+    // Only include ICE if it's editable (admin or initial set)
+    if (!iceLocked) payload.ice = company.ice.trim();
 
+    let cid = companyId;
     if (cid) {
-      // never update RC on existing companies
-      const { error: cErr } = await supabase
+      const { error } = await supabase
         .from("companies")
-        .update(updatePayload)
+        .update(payload)
         .eq("id", cid);
-      if (cErr) {
+      if (error) {
         setSaving(false);
         return toast({
           title: tp.error,
-          description: cErr.message,
+          description: error.message,
           variant: "destructive",
         });
       }
     } else {
-      const { data: created, error: cErr } = await supabase
+      const { data: created, error } = await supabase
         .from("companies")
-        .insert({ ...updatePayload, rc: rc.trim() })
+        .insert({ ...payload, ice: company.ice.trim() })
         .select("id")
         .single();
-      if (cErr || !created) {
+      if (error || !created) {
         setSaving(false);
         return toast({
           title: tp.error,
-          description: cErr?.message,
+          description: error?.message,
           variant: "destructive",
         });
       }
       cid = (created as any).id;
       setCompanyId(cid);
-
-      // link the new company to the profile
-      const { error: pErr } = await supabase
+      await supabase
         .from("profiles")
         .update({ company: cid })
         .eq("id", user.id);
-      if (pErr) {
-        setSaving(false);
-        return toast({
-          title: tp.error,
-          description: pErr.message,
-          variant: "destructive",
-        });
-      }
     }
 
+    setOriginal(company);
+    setEditing(false);
     setSaving(false);
     toast({ title: tp.saved });
     if (redirect) navigate(redirect);
   };
+
+  const set = (k: keyof CompanyState) => (v: string) =>
+    setCompany((c) => ({ ...c, [k]: v }));
+
+  const disabled = !editing;
 
   return (
     <div dir={direction} className="min-h-screen bg-background flex flex-col">
@@ -162,12 +198,11 @@ const Profile = () => {
             <p className="text-sm text-muted-foreground">{tp.subtitle}</p>
           </div>
 
-          {/* Personal information — read-only, managed by admin */}
+          {/* Personal */}
           <Card className="p-6 space-y-4">
             <h2 className="text-lg font-semibold">{tp.personalSection}</h2>
             <p className="text-xs text-muted-foreground">
-              {tp.personalManagedByAdmin ??
-                "Personal information is managed by the administrator."}
+              {tp.personalManagedByAdmin}
             </p>
             <div className="space-y-2">
               <Label>{tp.email}</Label>
@@ -185,82 +220,112 @@ const Profile = () => {
             </div>
           </Card>
 
-          {/* Company information — editable by the user */}
+          {/* Company */}
           <Card className="p-6 space-y-4">
-            <h2 className="text-lg font-semibold">{tp.companySection}</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">{tp.companySection}</h2>
+              {!editing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditing(true)}
+                  disabled={loading}
+                >
+                  {tp.edit}
+                </Button>
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label>{tp.companyName} *</Label>
               <Input
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                disabled={loading}
+                value={company.name}
+                onChange={(e) => set("name")(e.target.value)}
+                disabled={disabled || loading}
               />
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{tp.ice} *</Label>
                 <Input
-                  value={ice}
-                  onChange={(e) => setIce(e.target.value)}
-                  disabled={loading}
+                  value={company.ice}
+                  onChange={(e) => set("ice")(e.target.value)}
+                  disabled={disabled || loading || iceLocked}
                 />
+                {iceLocked && (
+                  <p className="text-xs text-muted-foreground">
+                    {tp.iceLocked}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>{tp.rc} *</Label>
                 <Input
-                  value={rc}
-                  onChange={(e) => setRc(e.target.value)}
-                  disabled={loading || rcLocked}
+                  value={company.rc}
+                  onChange={(e) => set("rc")(e.target.value)}
+                  disabled={disabled || loading}
                 />
-                {rcLocked && (
-                  <p className="text-xs text-muted-foreground">{tp.rcLocked}</p>
-                )}
               </div>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{tp.city} *</Label>
                 <Input
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  disabled={loading}
+                  value={company.city}
+                  onChange={(e) => set("city")(e.target.value)}
+                  disabled={disabled || loading}
                 />
               </div>
               <div className="space-y-2">
                 <Label>{tp.companyPhone} *</Label>
                 <Input
-                  value={companyPhone}
-                  onChange={(e) => setCompanyPhone(e.target.value)}
-                  disabled={loading}
+                  value={company.phone}
+                  onChange={(e) => set("phone")(e.target.value)}
+                  disabled={disabled || loading}
                 />
               </div>
             </div>
             <div className="space-y-2">
               <Label>{tp.officeAddress} *</Label>
               <Input
-                value={officeAddress}
-                onChange={(e) => setOfficeAddress(e.target.value)}
-                disabled={loading}
+                value={company.office_address}
+                onChange={(e) => set("office_address")(e.target.value)}
+                disabled={disabled || loading}
               />
             </div>
             <div className="space-y-2">
               <Label>{tp.storageOffice} *</Label>
               <Input
-                value={storageOffice}
-                onChange={(e) => setStorageOffice(e.target.value)}
-                disabled={loading}
+                value={company.storage_office}
+                onChange={(e) => set("storage_office")(e.target.value)}
+                disabled={disabled || loading}
               />
             </div>
-          </Card>
 
-          <div className="flex justify-end">
-            <Button onClick={save} disabled={saving || loading}>
-              {saving ? tp.saving : tp.save}
-            </Button>
-          </div>
+            {editing && (
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="ghost" onClick={handleCancel} disabled={saving}>
+                  {tp.cancel}
+                </Button>
+                <Button onClick={save} disabled={saving || !dirty}>
+                  {saving ? tp.saving : tp.save}
+                </Button>
+              </div>
+            )}
+          </Card>
         </div>
       </main>
       <Footer />
+
+      <ConfirmDiscardDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={tp.discardTitle}
+        description={tp.discardDesc}
+        cancelLabel={tp.keepEditing}
+        confirmLabel={tp.discard}
+        onConfirm={discard}
+      />
     </div>
   );
 };
