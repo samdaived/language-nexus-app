@@ -18,6 +18,23 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 
 const queryClient = new QueryClient();
 
+console
+.log(
+"URL"
+, 
+import
+.meta.env.VITE_SUPABASE_URL)
+console
+.log(
+"KEY"
+, 
+import
+.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.slice(
+0
+, 
+20
+))
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
