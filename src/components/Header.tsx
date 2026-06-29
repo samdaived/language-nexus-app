@@ -57,7 +57,7 @@ export const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <a href="#home" className="flex items-center gap-2">
+          <a href="/#home" className="flex items-center gap-2">
             <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center shadow-soft">
               <span className="text-primary-foreground font-bold text-lg">
                 PN
