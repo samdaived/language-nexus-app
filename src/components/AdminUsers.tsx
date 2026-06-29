@@ -351,11 +351,10 @@ export const AdminUsers = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  size="icon"
                   onClick={() => setCreatingCompany(true)}
-                  title={ta.addCompany}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4 mr-2" />
+                  {ta.addCompany}
                 </Button>
               </div>
             </div>

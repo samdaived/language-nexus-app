@@ -32,6 +32,9 @@ const emptyCompany: CompanyState = {
   storage_office: "",
 };
 
+type PersonalState = { full_name: string; phone: string };
+const emptyPersonal: PersonalState = { full_name: "", phone: "" };
+
 const Profile = () => {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -40,9 +43,13 @@ const Profile = () => {
   const { t, direction } = useLanguage();
   const tp: any = (t as any).profile;
 
-  // Personal (read-only, managed by admin)
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
+  // Personal
+  const [personalOriginal, setPersonalOriginal] =
+    useState<PersonalState>(emptyPersonal);
+  const [personal, setPersonal] = useState<PersonalState>(emptyPersonal);
+  const [editingPersonal, setEditingPersonal] = useState(false);
+  const [savingPersonal, setSavingPersonal] = useState(false);
+  const [confirmPersonalOpen, setConfirmPersonalOpen] = useState(false);
 
   // Company
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -61,6 +68,10 @@ const Profile = () => {
     () => JSON.stringify(company) !== JSON.stringify(original),
     [company, original],
   );
+  const personalDirty = useMemo(
+    () => JSON.stringify(personal) !== JSON.stringify(personalOriginal),
+    [personal, personalOriginal],
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -72,8 +83,12 @@ const Profile = () => {
         .maybeSingle();
 
       if (profile) {
-        setFullName((profile as any).full_name ?? "");
-        setPhone((profile as any).phone ?? "");
+        const pers: PersonalState = {
+          full_name: (profile as any).full_name ?? "",
+          phone: (profile as any).phone ?? "",
+        };
+        setPersonalOriginal(pers);
+        setPersonal(pers);
         const cid = (profile as any).company as string | null;
         if (cid) {
           setCompanyId(cid);
@@ -122,6 +137,39 @@ const Profile = () => {
     setEditing(false);
     setConfirmOpen(false);
   };
+
+  const handleCancelPersonal = () => {
+    if (personalDirty) setConfirmPersonalOpen(true);
+    else setEditingPersonal(false);
+  };
+  const discardPersonal = () => {
+    setPersonal(personalOriginal);
+    setEditingPersonal(false);
+    setConfirmPersonalOpen(false);
+  };
+  const savePersonal = async () => {
+    if (!user) return;
+    setSavingPersonal(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        full_name: personal.full_name.trim() || null,
+        phone: personal.phone.trim() || null,
+      })
+      .eq("id", user.id);
+    setSavingPersonal(false);
+    if (error)
+      return toast({
+        title: tp.error,
+        description: error.message,
+        variant: "destructive",
+      });
+    setPersonalOriginal(personal);
+    setEditingPersonal(false);
+    toast({ title: tp.saved });
+  };
+  const setP = (k: keyof PersonalState) => (v: string) =>
+    setPersonal((p) => ({ ...p, [k]: v }));
 
   const save = async () => {
     if (!user) return;
@@ -187,6 +235,7 @@ const Profile = () => {
     setCompany((c) => ({ ...c, [k]: v }));
 
   const disabled = !editing;
+  const disabledP = !editingPersonal;
 
   return (
     <div dir={direction} className="min-h-screen bg-background flex flex-col">
@@ -200,10 +249,19 @@ const Profile = () => {
 
           {/* Personal */}
           <Card className="p-6 space-y-4">
-            <h2 className="text-lg font-semibold">{tp.personalSection}</h2>
-            <p className="text-xs text-muted-foreground">
-              {tp.personalManagedByAdmin}
-            </p>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">{tp.personalSection}</h2>
+              {!editingPersonal && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditingPersonal(true)}
+                  disabled={loading}
+                >
+                  {tp.edit}
+                </Button>
+              )}
+            </div>
             <div className="space-y-2">
               <Label>{tp.email}</Label>
               <Input value={user?.email ?? ""} disabled />
@@ -211,13 +269,38 @@ const Profile = () => {
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{tp.fullName}</Label>
-                <Input value={fullName} disabled />
+                <Input
+                  value={personal.full_name}
+                  onChange={(e) => setP("full_name")(e.target.value)}
+                  disabled={disabledP || loading}
+                />
               </div>
               <div className="space-y-2">
                 <Label>{tp.phone}</Label>
-                <Input value={phone} disabled />
+                <Input
+                  value={personal.phone}
+                  onChange={(e) => setP("phone")(e.target.value)}
+                  disabled={disabledP || loading}
+                />
               </div>
             </div>
+            {editingPersonal && (
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  variant="ghost"
+                  onClick={handleCancelPersonal}
+                  disabled={savingPersonal}
+                >
+                  {tp.cancel}
+                </Button>
+                <Button
+                  onClick={savePersonal}
+                  disabled={savingPersonal || !personalDirty}
+                >
+                  {savingPersonal ? tp.saving : tp.save}
+                </Button>
+              </div>
+            )}
           </Card>
 
           {/* Company */}
@@ -325,6 +408,15 @@ const Profile = () => {
         cancelLabel={tp.keepEditing}
         confirmLabel={tp.discard}
         onConfirm={discard}
+      />
+      <ConfirmDiscardDialog
+        open={confirmPersonalOpen}
+        onOpenChange={setConfirmPersonalOpen}
+        title={tp.discardTitle}
+        description={tp.discardDesc}
+        cancelLabel={tp.keepEditing}
+        confirmLabel={tp.discard}
+        onConfirm={discardPersonal}
       />
     </div>
   );
