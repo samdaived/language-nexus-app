@@ -22,10 +22,10 @@ export const Header = () => {
         : "Prices";
 
   const navItems = [
-    { label: t.nav.home, href: "/home", internal: false },
-    { label: t.nav.products, href: "/products", internal: false },
-    { label: t.nav.about, href: "/about", internal: false },
-    { label: t.nav.contact, href: "/contact", internal: false },
+    { label: t.nav.home, href: "/#home", internal: false },
+    { label: t.nav.products, href: "/#products", internal: false },
+    { label: t.nav.about, href: "/#about", internal: false },
+    { label: t.nav.contact, href: "/#contact", internal: false },
     { label: pricesLabel, href: "/prices", internal: true },
     ...(user
       ? [
@@ -46,22 +46,6 @@ export const Header = () => {
         ]
       : []),
   ];
-
-  const scrollToSection = (
-    e: React.MouseEvent<HTMLAnchorElement>,
-    id: string,
-  ) => {
-    e.preventDefault();
-
-    if (location.pathname !== "/") {
-      navigate("/", { state: { scrollTo: id } });
-      return;
-    }
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  };
 
   const handleLogout = async () => {
     await signOut();
@@ -104,7 +88,6 @@ export const Header = () => {
                 <a
                   key={item.href}
                   href={item.href}
-                  onClick={(e) => scrollToSection(e, item.href.substring(1))}
                   className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-300"
                 >
                   {item.label}
